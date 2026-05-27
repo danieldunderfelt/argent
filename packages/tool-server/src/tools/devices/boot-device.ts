@@ -581,7 +581,16 @@ async function bootAndroidImpl(params: {
   if (!hasSnapshot) {
     hotBootFailureReason = "no default_boot snapshot exists";
   } else {
-    const probe = await checkSnapshotLoadable(params.avdName, "default_boot");
+    // `-gpu auto` overrides `hw.gpu.enabled=no` (avdmanager's default) so the
+    // emulator picks up a hardware Vulkan ICD when available instead of
+    // falling back to lavapipe/swangle. Probe and boot must share the same
+    // renderer-affecting argv — otherwise the probe resolves a different
+    // renderer than the boot and rejects every valid snapshot with "different
+    // renderer configured". RENDERER_ARGS keeps the two in lockstep.
+    const RENDERER_ARGS = ["-gpu", "auto"] as const;
+    const probe = await checkSnapshotLoadable(params.avdName, "default_boot", {
+      extraArgs: RENDERER_ARGS,
+    });
     if (!probe.loadable) {
       hotBootFailureReason = `-check-snapshot-loadable: ${probe.reason ?? "unknown"}`;
     } else {
@@ -591,7 +600,13 @@ async function bootAndroidImpl(params: {
       // rather than hanging for the full overall budget. `-no-snapshot-save`
       // avoids overwriting a working snapshot with state captured after we
       // later force-kill the child from a failure path.
-      const hotArgs = ["-avd", params.avdName, "-force-snapshot-load", "-no-snapshot-save"];
+      const hotArgs = [
+        "-avd",
+        params.avdName,
+        "-force-snapshot-load",
+        "-no-snapshot-save",
+        ...RENDERER_ARGS,
+      ];
       const hotAttemptDeadline = Math.min(overallDeadline, Date.now() + HOT_BOOT_BUDGET_MS);
       try {
         const result = await attemptBoot({
@@ -630,7 +645,9 @@ async function bootAndroidImpl(params: {
   }
 
   // Cold boot fallback (either no usable snapshot, or hot-boot attempt failed).
-  const coldArgs = ["-avd", params.avdName, "-no-snapshot-load"];
+  // `-gpu auto` mirrors the hot-boot path so the snapshot this cold boot
+  // saves matches the renderer the next launch's probe will resolve.
+  const coldArgs = ["-avd", params.avdName, "-no-snapshot-load", "-gpu", "auto"];
   let coldResult: { serial: string };
   try {
     coldResult = await attemptBoot({
