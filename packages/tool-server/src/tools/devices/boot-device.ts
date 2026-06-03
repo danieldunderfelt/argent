@@ -16,6 +16,7 @@ import {
 import {
   adbShell,
   checkSnapshotLoadable,
+  emulatorSupportsFlag,
   hasDefaultBootSnapshot,
   listAndroidDevices,
   listAvds,
@@ -800,6 +801,17 @@ async function bootAndroidImpl(params: {
   }
   const serialsBefore = new Set(existingDevices.map((d) => d.serial));
 
+  // Suppress the emulator's crash-report prompt/uploader on builds that accept
+  // the flag. `-crash-report-mode` is undocumented and only present in newer
+  // emulator releases (~36.x and late 35.x), so feature-detect it via `-help`
+  // rather than pass it blind: an unrecognized flag aborts the launch before
+  // boot. Computed here (after the already-running reuse fast-path returns) so
+  // the `-help` probe is skipped when we are not going to spawn, and shared by
+  // both the hot- and cold-boot arg lists below.
+  const crashReportArgs = (await emulatorSupportsFlag("-crash-report-mode"))
+    ? ["-crash-report-mode", "never"]
+    : [];
+
   // Decide whether to try a hot boot: only if a default_boot snapshot exists
   // on disk AND the emulator's own `-check-snapshot-loadable` probe says the
   // metadata is valid. Probe takes ~1-2 s and catches the two most common
@@ -834,6 +846,7 @@ async function bootAndroidImpl(params: {
         "-no-snapshot-save",
         ...RENDERER_ARGS,
         ...LAUNCH_HARDENING_ARGS,
+        ...crashReportArgs,
       ];
       const hotAttemptDeadline = Math.min(overallDeadline, Date.now() + HOT_BOOT_BUDGET_MS);
       try {
@@ -890,6 +903,7 @@ async function bootAndroidImpl(params: {
     gpuMode,
     ...extraEmulatorArgs,
     ...LAUNCH_HARDENING_ARGS,
+    ...crashReportArgs,
   ];
   let coldResult: { serial: string };
   try {
