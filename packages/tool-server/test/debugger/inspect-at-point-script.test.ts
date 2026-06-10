@@ -14,7 +14,12 @@ import { makeInspectScript } from "../../src/utils/debugger/scripts/inspect-at-p
  */
 
 function hostFiber(publicInstance: unknown) {
-  return { type: "RCTView", stateNode: { node: {}, canonical: { nativeTag: 1, publicInstance } }, child: null, sibling: null };
+  return {
+    type: "RCTView",
+    stateNode: { node: {}, canonical: { nativeTag: 1, publicInstance } },
+    child: null,
+    sibling: null,
+  };
 }
 
 function comp(displayName: string, child: unknown, sibling: unknown = null) {
@@ -43,7 +48,9 @@ function makeHook(entries: Array<[number, unknown, unknown[]]>) {
   return { renderers, getFiberRoots: (id: number) => new Set(rootsById.get(id) ?? []) };
 }
 
-function runInspect(hook: unknown): { type: string; items?: Array<{ name: string }>; error?: string } | null {
+function runInspect(
+  hook: unknown
+): { type: string; items?: Array<{ name: string }>; error?: string } | null {
   const g = globalThis as Record<string, unknown>;
   const saved = {
     window: g.window,
@@ -55,7 +62,9 @@ function runInspect(hook: unknown): { type: string; items?: Array<{ name: string
   g.window = g;
   g.__REACT_DEVTOOLS_GLOBAL_HOOK__ = hook;
   g.nativeFabricUIManager = {}; // useFabric true → findHostFiber uses stateNode.node
-  g.__argent_callback = (payload: string) => { captured = JSON.parse(payload); };
+  g.__argent_callback = (payload: string) => {
+    captured = JSON.parse(payload);
+  };
   try {
     (0, eval)(makeInspectScript(50, 90, "t"));
     return captured;
