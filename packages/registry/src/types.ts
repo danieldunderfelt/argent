@@ -86,9 +86,9 @@ export interface ToolContext extends InvokeToolOptions {
 
 // ── Device + Capability Types ──
 
-export type Platform = "ios" | "android";
+export type Platform = "ios" | "android" | "electron";
 
-export type DeviceKind = "simulator" | "emulator" | "device" | "unknown";
+export type DeviceKind = "simulator" | "emulator" | "device" | "app" | "unknown";
 
 /**
  * Universal device handle. Platform-aware tools resolve a `udid` parameter into
@@ -118,6 +118,9 @@ export interface ToolCapability {
     emulator?: boolean;
     device?: boolean;
     unknown?: boolean;
+  };
+  electron?: {
+    app?: boolean;
   };
   /** Optional refiner. Returns true if this device is supported. */
   supports?: (device: DeviceInfo) => boolean;
