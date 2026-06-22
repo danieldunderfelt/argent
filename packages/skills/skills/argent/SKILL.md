@@ -11,20 +11,20 @@ A **Chromium (CDP) app** is any Chromium runtime exposing a Chrome DevTools Prot
 
 ## Availability
 
-Run this check **once per session**, before the first Argent tool call or `argent` command. Do not re-probe before later calls.
+**IMPORTANT:** Run this check once per session, before the first Argent tool call or `argent` command. Do not re-probe before later calls.
 
 1. Are `mcp__argent__*` tools in your tool list? If none are present, Argent is not available.
 2. If still unsure, run `command -v argent`. A non-zero exit means the CLI is not on PATH.
 
 If Argent **is** available, proceed normally.
 
-If Argent is **absent**, treat it as an expected state — not an error to retry. Do not call `mcp__argent__*` tools, do not run `argent` commands, and do not attempt any Argent workflow. Tell the user once, and ask if you should continue without Argent:
+If Argent is **absent**, treat it as an expected state — not an error to retry. **IMPORTANT:** Do not call `mcp__argent__*` tools, do not run `argent` commands, and do not attempt any Argent workflow. Tell the user once, and ask if you should continue without Argent:
 
 > Argent isn't installed in this environment. To enable the mobile/Chromium tooling this repo is configured for, run `npx @swmansion/argent init -y` (or `npm i -g @swmansion/argent && argent init -y`).
 
 ## Skill Loading
 
-**Always read the relevant Argent sub-skill before executing Argent MCP tools** — sub-skills contain the full step-by-step procedure and edge-case handling for each workflow.
+**IMPORTANT:** Always read the relevant Argent sub-skill before executing Argent MCP tools — sub-skills contain the full step-by-step procedure and edge-case handling for each workflow.
 
 Before any touch interaction, read `argent-device-interact`.
 
@@ -36,8 +36,9 @@ Before any touch interaction, read `argent-device-interact`.
 
 ## Mandatory Rules
 
+**IMPORTANT:** Never derive tap coordinates from screenshots. Before every tap, call a discovery tool and use coordinates from its result.
+
 - Before booting, running, or interacting with any app, call `list-devices`; prefer running devices unless the user named a platform or device.
-- Never derive tap coordinates from screenshots. Before every tap, call a discovery tool and use coordinates from its result.
 - Prefer discovery tools in this order: `describe`, `native-describe-screen` on iOS, then `debugger-component-tree` for React Native.
 - `native-user-interactable-view-at-point` / `native-view-at-point` are follow-up diagnostics once you already have a candidate point (iOS only).
 - Re-run discovery whenever the screen changes. Screenshots alone are never sufficient for tap coordinates.
@@ -67,7 +68,7 @@ When `is_react_native` is true, load `argent-react-native-app-workflow`. Use `de
 
 ## Skill Routing
 
-Load the matching Argent skill before executing Argent MCP tools:
+**IMPORTANT:** Load the matching Argent skill before executing Argent MCP tools.
 
 - `argent-ios-simulator-setup`: iOS simulator setup, no simulator booted, UDID needed, or simulator-server setup.
 - `argent-android-emulator-setup`: Android emulator setup, no emulator running, adb serial needed, or APK install.
